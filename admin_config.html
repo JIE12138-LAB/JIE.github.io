@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统配置 - 后台管理</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 220px;
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 0;
+        }
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #34495e;
+            margin-bottom: 20px;
+        }
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+        .sidebar-menu li {
+            margin: 5px 0;
+        }
+        .sidebar-menu a {
+            display: block;
+            padding: 12px 20px;
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: #34495e;
+            border-left: 4px solid #3498db;
+        }
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .config-group {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .config-group h2 {
+            background-color: #2c3e50;
+            color: white;
+            margin: 0;
+            padding: 12px 15px;
+            font-size: 16px;
+        }
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .config-table th, .config-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        .config-table th {
+            width: 20%;
+            font-weight: bold;
+            color: #7f8c8d;
+        }
+        .config-table tr:hover {
+            background-color: #f9f9f9;
+        }
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .alert {
+            padding: 10px;
+            margin-bottom: 15px;
+            background-color: #d4edda;
+            color: #155724;
+            border-radius: 4px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 40%;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover, .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>后台管理</h2>
+                <p>欢迎，{{ current_user.username }}</p>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="{{ url_for('admin_dashboard') }}">控制台</a></li>
+                <li><a href="{{ url_for('admin_users') }}">用户管理</a></li>
+                <li><a href="{{ url_for('admin_departments') }}">部门管理</a></li>
+                <li><a href="{{ url_for('admin_projects') }}">项目管理</a></li>
+                <li><a href="{{ url_for('list_records') }}">记录管理</a></li>
+                <li><a href="{{ url_for('admin_config') }}" class="active">系统配置</a></li>
+                <li><a href="{{ url_for('logout') }}">退出登录</a></li>
+            </ul>
+        </div>
+        
+        <div class="main-content">
+            <div class="header-actions">
+                <h1>系统配置</h1>
+            </div>
+            
+            {% if success %}
+            <div class="alert">{{ success }}</div>
+            {% endif %}
+            
+            <!-- 基本设置 -->
+            <div class="config-group">
+                <h2>基本设置</h2>
+                <table class="config-table">
+                    <tr>
+                        <th>系统名称</th>
+                        <td>
+                            <span id="system_name_value">{{ configs.system_name.value }}</span>
+                            <button class="btn btn-primary edit-btn" data-key="system_name">编辑</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>默认分页大小</th>
+                        <td>
+                            <span id="page_size_value">{{ configs.page_size.value }}</span>
+                            <button class="btn btn-primary edit-btn" data-key="page_size">编辑</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>默认部门</th>
+                        <td>
+                            <span id="default_department_value">{{ configs.default_department.name }}</span>
+                            <button class="btn btn-primary edit-btn" data-key="default_department">编辑</button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            
+            <!-- 功能设置 -->
+            <div class="config-group">
+                <h2>功能设置</h2>
+                <table class="config-table">
+                    <tr>
+                        <th>是否需要客户签字</th>
+                        <td>
+                            <span id="signature_required_value">{{ '是' if configs.signature_required.value == 'true' else '否' }}</span>
+                            <button class="btn btn-primary edit-btn" data-key="signature_required">编辑</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>是否需要服务人员签字</th>
+                        <td>
+                            <span id="service_sign_required_value">{{ '是' if configs.service_sign_required.value == 'true' else '否' }}</span>
+                            <button class="btn btn-primary edit-btn" data-key="service_sign_required">编辑</button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 编辑配置模态框 -->
+    <div id="configModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle">编辑配置</h2>
+            <form id="configForm">
+                <input type="hidden" id="configKey">
+                <div class="form-group">
+                    <label id="configLabel">配置值</label>
+                    <input type="text" id="configValue" class="form-control">
+                    <small id="configDescription" class="form-text text-muted"></small>
+                </div>
+                <button type="submit" class="btn btn-primary">保存</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 配置数据
+            const configData = {
+                system_name: {
+                    value: "{{ configs.system_name.value }}",
+                    label: "系统名称",
+                    description: "系统名称，显示在页面标题和顶部导航"
+                },
+                page_size: {
+                    value: "{{ configs.page_size.value }}",
+                    label: "默认分页大小",
+                    description: "列表页默认每页显示的记录数，推荐值：10-50"
+                },
+                signature_required: {
+                    value: "{{ configs.signature_required.value }}",
+                    label: "是否需要客户签字",
+                    description: "是否需要客户签字才能完成售后记录，true/false"
+                },
+                service_sign_required: {
+                    value: "{{ configs.service_sign_required.value }}",
+                    label: "是否需要服务人员签字",
+                    description: "是否需要服务人员签字才能完成售后记录，true/false"
+                },
+                default_department: {
+                    value: "{{ configs.default_department.value }}",
+                    label: "默认部门",
+                    description: "新用户和新记录的默认部门ID"
+                }
+            };
+            
+            // 获取模态框元素
+            const modal = document.getElementById('configModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const configForm = document.getElementById('configForm');
+            const closeBtn = document.querySelector('.close');
+            const configKeyInput = document.getElementById('configKey');
+            const configValueInput = document.getElementById('configValue');
+            const configLabel = document.getElementById('configLabel');
+            const configDescription = document.getElementById('configDescription');
+            
+            // 打开模态框
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const key = this.getAttribute('data-key');
+                    const config = configData[key];
+                    modalTitle.textContent = `编辑 ${config.label}`;
+                    configKeyInput.value = key;
+                    configValueInput.value = config.value;
+                    configLabel.textContent = config.label;
+                    configDescription.textContent = config.description;
+                    
+                    // 特殊处理布尔值配置
+                    if (key === 'signature_required' || key === 'service_sign_required') {
+                        configValueInput.value = config.value === 'true' ? 'true' : 'false';
+                        configDescription.textContent += ' (输入true或false)';
+                    }
+                    
+                    modal.style.display = 'block';
+                });
+            });
+            
+            // 关闭模态框
+            closeBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+            
+            window.addEventListener('click', function(event) {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            });
+            
+            // 表单提交
+            configForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const configKey = configKeyInput.value;
+                const configValue = configValueInput.value;
+                
+                // 发送AJAX请求保存配置
+                fetch('/admin/config/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'config_key': configKey,
+                        'config_value': configValue
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // 更新页面显示的值
+                        const valueElement = document.getElementById(configKey + '_value');
+                        if (valueElement) {
+                            // 特殊处理布尔值显示
+                            if (configKey === 'signature_required' || configKey === 'service_sign_required') {
+                                valueElement.textContent = configValue === 'true' ? '是' : '否';
+                            } else {
+                                valueElement.textContent = configValue;
+                            }
+                        }
+                        modal.style.display = 'none';
+                        alert('配置更新成功！');
+                    } else {
+                        alert('保存失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('保存时发生错误: ' + error.message);
+                    console.error('Error:', error);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
